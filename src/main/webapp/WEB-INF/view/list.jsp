@@ -68,31 +68,38 @@
 
     <div class="row">
         <div class="col-md-6">
-            当前记录数：xxxxx
+            当前第${pageInfo.pageNum}页，共有${pageInfo.pages}页，共有${pageInfo.total}条记录
         </div>
         <div class="col-md-6">
             <nav aria-label="Page navigation">
                 <ul class="pagination">
                     <li>
-                        <a href="#">首页</a>
+                        <a href="${APP_PATH}/emps?pn=1">首页</a>
                     </li>
+                    <c:if test="${pageInfo.hasPreviousPage}">
                     <li>
-                        <a href="#">末页</a>
-                    </li>
-                    <li>
-                        <a href="#" aria-label="Previous">
+                        <a href="${APP_PATH}/emps?pn=${pageInfo.pageNum - 1}" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
-                    <li><a href="#">1</a></li>
-                    <li><a href="#">2</a></li>
-                    <li><a href="#">3</a></li>
-                    <li><a href="#">4</a></li>
-                    <li><a href="#">5</a></li>
+                    </c:if>
+                    <c:forEach items="${pageInfo.navigatepageNums}" var="num">
+                        <c:if test="${num == pageInfo.pageNum}">
+                        <li class="active"><a href="#">${num}</a></li>
+                        </c:if>
+                        <c:if test="${num != pageInfo.pageNum}">
+                            <li><a href="${APP_PATH}/emps?pn=${num}">${num}</a></li>
+                        </c:if>
+                    </c:forEach>
+                    <c:if test="${pageInfo.hasNextPage}">
                     <li>
-                        <a href="#" aria-label="Next">
+                        <a href="${APP_PATH}/emps?pn=${pageInfo.pageNum + 1}" aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
+                    </li>
+                    </c:if>
+                    <li>
+                        <a href="${APP_PATH}/emps?pn=${pageInfo.pages}">末页</a>
                     </li>
                 </ul>
             </nav>
