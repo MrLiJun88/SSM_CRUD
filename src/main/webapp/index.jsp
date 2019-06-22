@@ -64,10 +64,15 @@
 </div>
 <!--在页面加载完成后，直接向服务器发送请求获取返回来的 json 数据 -->
 <script type="text/javascript">
-    $(function(){
+
+    $(function () {
+        //当页面一旦加载好就去访问服务器的首页
+        to_page(1);
+    });
+    function to_page(pn) {
         $.ajax({
             url:"${APP_PATH}/emps",
-            data:"pn=1",
+            data:"pn=" + pn,
             type:"GET",
             success:function(result){
                 // console.log(result);
@@ -78,9 +83,10 @@
                 build_page_nav(result);
             }
         });
-    });
+    };
     //1.解释并显示员工信息
     function build_emps_table(result) {
+        $("#emps_table tbody").empty();
         //获取到Controller层返回来的json数据
         var emps = result.resultMap.pageInfo.list;
         $.each(emps,function(index,item){
@@ -105,6 +111,7 @@
     };
     //解析显示分页信息
     function build_page_info(result) {
+        $("#page_info_area").empty();
         $("#page_info_area").append("当前第" +result.resultMap.pageInfo.pageNum+ "页，共有" +
             result.resultMap.pageInfo.pages+
             "页，共有" +result.resultMap.pageInfo.total+ "条记录");
@@ -119,7 +126,7 @@
             //判断是否有前一页
             firstPageLi.addClass("disabled");
             prePageLi.addClass("disabled");
-        } else{
+        }
             //为元素添加点击翻页的事件
             firstPageLi.click(function(){
                 to_page(1);
@@ -127,7 +134,6 @@
             prePageLi.click(function(){
                 to_page(result.resultMap.pageInfo.pageNum-1);
             });
-        };
         ul.append(firstPageLi).append(prePageLi);
         var nextPageLi= $("<li></li>").append($("<a></a>").append("&raquo;"));
         var lastPageLi= $("<li></li>").append($("<a></a>").append("末页"));
