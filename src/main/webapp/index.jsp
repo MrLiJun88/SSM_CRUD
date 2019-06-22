@@ -25,13 +25,19 @@
             <div class="modal-body">
                 <form class="form-horizontal">
                     <div class="form-group">
-                        <label for="empName_input" class="col-sm-2 control-label">员工姓名</label>
+                        <label for="empName_input" class="col-sm-2 control-label">员工号</label>
                         <div class="col-sm-10">
-                            <input type="text" name="empName" class="form-control" id="empName_input" placeholder="empName">
+                            <input type="text" name="empId" class="form-control" id="empId_input" placeholder="001">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="email_add_input" class="col-sm-2 control-label">email</label>
+                        <label for="empName_input" class="col-sm-2 control-label">员工姓名</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="empName" class="form-control" id="empName_input" placeholder="李俊">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_add_input" class="col-sm-2 control-label">邮箱</label>
                         <div class="col-sm-10">
                             <input type="text" name="email" class="form-control" id="email_add_input" placeholder="email@qq.com">
                         </div>
@@ -48,7 +54,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-2 control-label">所在部门名</label>
+                        <label class="col-sm-2 control-label">所在部门</label>
                         <div class="col-sm-4">
                             <select class="form-control" name="dId" id="dept_add_select">
 
@@ -59,7 +65,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-primary">保存</button>
+                <button type="button" class="btn btn-primary" id="emp_save_but">保存</button>
             </div>
         </div>
     </div>
@@ -115,7 +121,8 @@
 </div>
 <!--在页面加载完成后，直接向服务器发送请求获取返回来的 json 数据 -->
 <script type="text/javascript">
-
+    //总记录数
+    var totalPages = 0;
     $(function () {
         //当页面一旦加载好就去访问服务器的首页
         to_page(1);
@@ -166,6 +173,7 @@
         $("#page_info_area").append("当前第" +result.resultMap.pageInfo.pageNum+ "页，共有" +
             result.resultMap.pageInfo.pages+
             "页，共有" +result.resultMap.pageInfo.total+ "条记录");
+        totalPages = result.resultMap.pageInfo.total;
     };
     //2.//解析显示分页条信息
     function build_page_nav(result) {
@@ -239,6 +247,69 @@
             }
         });
     }
+    //当点击保存按钮时，向数据库存入新的用户信息
+    $("#emp_save_but").click(function () {
+        //新添的员工信息要先提交给服务器进行校验，正确才可以保存到数据库
+        if(! validate_add_form()){
+            return false;
+        };
+        $.ajax({
+            url:"${APP_PATH}/saveEmp",
+            type:"POST",
+            data:$("#empAddModal form").serialize(),
+            success:function(result) {
+            /*
+            当员工保存成功后
+            1.关闭模态框
+            2.到表单最后一行查看
+             */
+            $("#empAddModal").modal('hide');
+            //显示表单最后一行数据
+            to_page(totalPages);
+        }
+        });
+    });
+    //校验新添员工表单的信息是否合理
+    function validate_add_form() {
+        //校验员工的姓名与email
+        var empName = $("#empName_input").val();
+        //使用jquery自带的正则表达式
+        var regName=/(^[a-zA-Z0-9_-]{6,16}$)|(^[\u2E80-\u9FFF]{2,5})/;
+        //1、校验用户名
+        if(!regName.test(empName)){
+            //让输入框变色，添加has-error类
+            //给输入框下的span元素添加错误信息
+            //调用用户信息状态判断函数
+            show_validate_msg("#empName_input","error","用户名可以是2-5位中文或6-16位英文和数字的组合");
+            return false;
+        }else{
+            show_validate_msg("#empName_input","success","");
+        };
+        var email = $("#email_add_input").val();
+        //校验邮箱
+        var regEmail=/^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/;
+        if(!regEmail.test(email)){
+            show_validate_msg("#email_add_input","error","邮箱格式不正确");
+            return false;
+        }else{
+            show_validate_msg("#email_add_input","success","");
+        };
+        return true;
+    };
+    //提取一个用于校验用户信息状态的函数
+    function show_validate_msg(ele,status,msg){
+        //先清空之前的状态信息
+        $(ele).parent().removeClass("has-error has-success");
+        $(ele).next("span").text("");
+        if(status=="success"){
+            $(ele).parent().addClass("has-success");
+            $(ele).next("span").text(msg);
+        };
+        if(status=="error"){
+            $(ele).parent().addClass("has-error");
+            $(ele).next("span").text(msg);
+        };
+    };
 </script>
 </body>
 </html>
