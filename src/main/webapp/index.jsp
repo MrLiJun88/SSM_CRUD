@@ -14,6 +14,57 @@
     <script src="${APP_PATH}/static/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
 </head>
 <body>
+<!-- 添加员工模态框 -->
+<div class="modal fade" id="empAddModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">员工添加</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="empName_input" class="col-sm-2 control-label">员工姓名</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="empName" class="form-control" id="empName_input" placeholder="empName">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_add_input" class="col-sm-2 control-label">email</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="email" class="form-control" id="email_add_input" placeholder="email@qq.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_add_input" class="col-sm-2 control-label">性别</label>
+                        <div class="col-sm-10">
+                            <label class="radio-inline">
+                                <input type="radio" name="gender" id="gender1_add_input" value="M" checked="checked"> 男
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="gender" id="gender2_add_input" value="F"> 女
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">所在部门名</label>
+                        <div class="col-sm-4">
+                            <select class="form-control" name="dId" id="dept_add_select">
+
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <div class="row">
         <div class="col-md-12">
@@ -24,7 +75,7 @@
     <div class="row">
         <div class="col-md-4 col-md-offset-8">
             <button class="btn btn-primary">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                <span class="glyphicon glyphicon-plus" id="emp_add_modal_btn" aria-hidden="true"></span>
                 新增</button>
             <button class="btn btn-danger">
                 <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
@@ -126,7 +177,7 @@
             //判断是否有前一页
             firstPageLi.addClass("disabled");
             prePageLi.addClass("disabled");
-        }
+        } else {
             //为元素添加点击翻页的事件
             firstPageLi.click(function(){
                 to_page(1);
@@ -134,13 +185,14 @@
             prePageLi.click(function(){
                 to_page(result.resultMap.pageInfo.pageNum-1);
             });
+        }
         ul.append(firstPageLi).append(prePageLi);
         var nextPageLi= $("<li></li>").append($("<a></a>").append("&raquo;"));
         var lastPageLi= $("<li></li>").append($("<a></a>").append("末页"));
         if(result.resultMap.pageInfo.hasNextPage==false){
             nextPageLi.addClass("disabled");
             lastPageLi.addClass("disabled");
-        }
+        }else {
             //为末页和下一页添加点击跳转事件
             nextPageLi.click(function () {
                 to_page(result.resultMap.pageInfo.pageNum + 1);
@@ -148,6 +200,7 @@
             lastPageLi.click(function () {
                 to_page(result.resultMap.pageInfo.pages);
             });
+        }
         $.each(result.resultMap.pageInfo.navigatepageNums,function(index,item){
             var numLi=$("<li></li>").append($("<a></a>").append(item));
             if(result.resultMap.pageInfo.pageNum==item){
@@ -164,6 +217,28 @@
         var navEle=$("<nav></nav>").append(ul);
         navEle.appendTo("#page_nav_area");
     };
+    //点击新增按钮，弹出模态框
+    $("#emp_add_modal_btn").click(function () {
+        //从数据库中获取部门信息显示在下拉列表中
+        getDepartments();
+        //弹出模态框
+        $("#empAddModal").modal({
+            backdrop:"static"
+        });
+    });
+    //从数据库中获取部门信息
+    function getDepartments() {
+        $.ajax({
+            url:"${APP_PATH}/getDepts",
+            type:"GET",
+            success:function (result) {
+                $.each(result.resultMap.departmentList,function () {
+                    var optionEle=$("<option></option>").append(this.deptName).attr("value",this.deptId);
+                    optionEle.appendTo($("#dept_add_select"));
+                });
+            }
+        });
+    }
 </script>
 </body>
 </html>
