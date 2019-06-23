@@ -52,6 +52,25 @@ public class EmployeeController {
         return Message.success();
     }
 
+    /**检查页面传来的员工姓名是否可用*/
+    @RequestMapping(value = "/checkEmp",method = RequestMethod.POST)
+    @ResponseBody
+    public Message checkEmp(@RequestParam("empName") String empName){
+        /**
+         * 在判断用户名是否已经存在时，先判断用户名是否合理，再判断
+         */
+        String check = "(^[a-zA-Z0-9_-]{6,16}$)|(^[\\u2E80-\\u9FFF]{2,5})";
+        if(! empName.matches(check)){
+            return Message.fail().add("va_msg","用户名可以是2-5位中文或6-16位英文和数字的组合");
+        }
+        /**数据库用户名重复校验*/
+        boolean b = employeeService.checkEmp(empName);
+        if(b){
+            return Message.success();
+        }
+        return Message.fail().add("va_msg","用户名不可用");
+    }
+
 
 
 

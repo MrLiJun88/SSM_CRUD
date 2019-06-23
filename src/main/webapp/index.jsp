@@ -34,12 +34,14 @@
                         <label for="empName_input" class="col-sm-2 control-label">员工姓名</label>
                         <div class="col-sm-10">
                             <input type="text" name="empName" class="form-control" id="empName_input" placeholder="李俊">
+                            <span class="help-block"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="email_add_input" class="col-sm-2 control-label">邮箱</label>
                         <div class="col-sm-10">
                             <input type="text" name="email" class="form-control" id="email_add_input" placeholder="email@qq.com">
+                            <span class="help-block"></span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -225,8 +227,17 @@
         var navEle=$("<nav></nav>").append(ul);
         navEle.appendTo("#page_nav_area");
     };
+    //表单数据重置函数
+    function reset_form(ele){
+        $(ele)[0].reset();
+        $(ele).find("*").removeClass("has-error has-success");
+        $(ele).find(".help-block").text("");
+
+    };
     //点击新增按钮，弹出模态框
     $("#emp_add_modal_btn").click(function () {
+        //弹出之前，表单数据重置
+        reset_form("#empAddModal form");
         //从数据库中获取部门信息显示在下拉列表中
         getDepartments();
         //弹出模态框
@@ -253,6 +264,10 @@
         if(! validate_add_form()){
             return false;
         };
+        //校验新添用户名是否已经存在，如果存在则，不可以保存
+        if($(this).attr("ajax_va") == "error"){
+            return false;
+        }
         $.ajax({
             url:"${APP_PATH}/saveEmp",
             type:"POST",
@@ -310,6 +325,26 @@
             $(ele).next("span").text(msg);
         };
     };
+    //给员工姓名绑定事件，当内容发生改变时，就发送ajax 请求
+    //判断员工姓名是否已经存在于数据库中，若已经存在则返回提示信息
+    $("#empName_input").change(function () {
+        var empName = this.value;
+        $.ajax({
+            url:"${APP_PATH}/checkEmp",
+            data:"empName=" + empName,
+            type:"POST",
+            success:function (result) {
+                if(result.stateCode == 200){
+                    show_validate_msg("#empName_input","success","用户名可用");
+                    $("#emp_save_but").attr("ajax_va","success");
+                }
+                else {
+                    show_validate_msg("#empName_input","error",result.resultMap.va_msg);
+                    $("#emp_save_but").attr("ajax_va","error");
+                }
+            }
+        });
+    });
 </script>
 </body>
 </html>
