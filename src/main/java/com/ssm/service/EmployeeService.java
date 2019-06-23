@@ -31,4 +31,9 @@ public class EmployeeService {
         long count = employeeMapper.countByExample(employeeExample);
         return count == 0 ? true:false;
     }
+
+    /**根据员工id获取到员工信息*/
+    public Employee getEmp(Integer empId){
+        return employeeMapper.selectByPrimaryKey(empId);
+    }
 }

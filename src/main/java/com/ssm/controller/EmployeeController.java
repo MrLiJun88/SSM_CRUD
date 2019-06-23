@@ -5,14 +5,17 @@ import com.github.pagehelper.PageInfo;
 import com.ssm.entity.Employee;
 import com.ssm.entity.Message;
 import com.ssm.service.EmployeeService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 处理页面对员工的crud请求
@@ -47,9 +50,25 @@ public class EmployeeController {
     /**保存新添员工信息*/
     @RequestMapping(value = "/saveEmp",method = RequestMethod.POST)
     @ResponseBody
-    public Message saveEmp(Employee employee){
-        employeeService.saveEmpl(employee);
-        return Message.success();
+    /**
+     * 当向数据库存放用户信息时，对用户的信息进行校验，并绑定错误事件
+     * */
+    public Message saveEmp(@Validated Employee employee, BindingResult result){
+        if(result.hasErrors()){
+            /**将错误信息放在Map中，以json的形式返回给页面*/
+            Map<String,Object> errorMap = new HashMap<>();
+            List<FieldError> erros = result.getFieldErrors();
+            for(FieldError error : erros){
+                errorMap.put(error.getField(),error.getDefaultMessage());
+                System.out.println("错误字段名 " + error.getField());
+                System.out.println("错误信息 " + error.getDefaultMessage());
+            }
+            return Message.fail().add("errorMap",errorMap);
+        }
+        else {
+            employeeService.saveEmpl(employee);
+            return Message.success();
+        }
     }
 
     /**检查页面传来的员工姓名是否可用*/
@@ -71,6 +90,15 @@ public class EmployeeController {
         return Message.fail().add("va_msg","用户名不可用");
     }
 
+    /**根据员工id获取到员工信息
+     * @PathVariable("empId") 指定从url路径中获取empId值
+     * */
+    @RequestMapping(value = "/getEmp/{empId}",method = RequestMethod.GET)
+    @ResponseBody
+    public Message getEmp(@PathVariable("empId")Integer empId){
+        Employee employee = employeeService.getEmp(empId);
+        return Message.success().add("employee",employee);
+    }
 
 
 

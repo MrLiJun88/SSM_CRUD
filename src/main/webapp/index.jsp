@@ -14,6 +14,48 @@
     <script src="${APP_PATH}/static/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
 </head>
 <body>
+<!-- 修改员工信息模态框 -->
+<div class="modal fade" id="empUpdateModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">员工修改</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="empName_update_static" class="col-sm-2 control-label">员工姓名</label>
+                        <div class="col-sm-10">
+                            <p class="form-control-static" id="empName_update_static"></p>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_update_input" class="col-sm-2 control-label">邮箱</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="email" class="form-control" id="email_update_input">
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">所在部门</label>
+                        <div class="col-sm-4">
+                            <select class="form-control" name="dId">
+
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="emp_update_btn">更新</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 添加员工模态框 -->
 <div class="modal fade" id="empAddModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">
@@ -157,6 +199,8 @@
             var deptName=$("<td></td>").append(item.department.deptName);
             var editBtn=$("<button></button>").addClass("btn btn-primary btn-sm edit_btn")
                 .append($("<span></span>").addClass("glyphicon glyphicon-pencil")).append("编辑");
+            //为编辑按钮添加一个自定义属性，来表示当前员工id
+            editBtn.attr("edit_ID",item.empId);
             var delBtn=$("<button></button>").addClass("btn btn-danger btn-sm delete_btn")
                 .append($("<span></span>").addClass("glyphicon glyphicon-trash")).append("删除");
             var btnTd=$("<td></td>").append(editBtn).append(" ").append(delBtn);
@@ -239,28 +283,30 @@
         //弹出之前，表单数据重置
         reset_form("#empAddModal form");
         //从数据库中获取部门信息显示在下拉列表中
-        getDepartments();
+        getDepartments($("#dept_add_select"));
         //弹出模态框
         $("#empAddModal").modal({
             backdrop:"static"
         });
     });
     //从数据库中获取部门信息
-    function getDepartments() {
+    function getDepartments(ele) {
+        //清空之前下拉列表中的数据
+        $(ele).empty();
         $.ajax({
             url:"${APP_PATH}/getDepts",
             type:"GET",
             success:function (result) {
                 $.each(result.resultMap.departmentList,function () {
                     var optionEle=$("<option></option>").append(this.deptName).attr("value",this.deptId);
-                    optionEle.appendTo($("#dept_add_select"));
+                    optionEle.appendTo(ele);
                 });
             }
         });
     }
     //当点击保存按钮时，向数据库存入新的用户信息
     $("#emp_save_but").click(function () {
-        //新添的员工信息要先提交给服务器进行校验，正确才可以保存到数据库
+        //新添的员工信息要先提交给ajax进行校验，正确才可以保存到数据库
         if(! validate_add_form()){
             return false;
         };
@@ -273,14 +319,26 @@
             type:"POST",
             data:$("#empAddModal form").serialize(),
             success:function(result) {
-            /*
-            当员工保存成功后
-            1.关闭模态框
-            2.到表单最后一行查看
-             */
-            $("#empAddModal").modal('hide');
-            //显示表单最后一行数据
-            to_page(totalPages);
+                if(result.stateCode == 200){
+                    /*
+                     当员工保存成功后
+                     1.关闭模态框
+                     2.到表单最后一行查看
+                    */
+                    $("#empAddModal").modal('hide');
+                    //显示表单最后一行数据
+                    to_page(totalPages);
+                }
+                else {
+                    //显示失败信息
+                    //有哪个字段的错误信息，就显示哪个字段的错误信息
+                    if(undefined != result.resultMap.errorMap.email){
+                        show_validate_msg("#email_add_input","error",result.resultMap.errorMap.email);
+                    }
+                    if(undefined != result.resultMap.errorMap.empName){
+                        show_validate_msg("#empName_input","error",result.resultMap.errorMap.empName);
+                    }
+                }
         }
         });
     });
@@ -345,6 +403,33 @@
             }
         });
     });
+    /**为每个员工修改信息按钮绑定事件
+     * on : 可以为后来的元素添加事件
+     */
+    $(document).on("click",".edit_btn",function () {
+        //在弹出修改员工信息模态框时，也要显示部门信息
+        getDepartments($("#empUpdateModal select"));
+        //查询员工信息，并显示
+        getEmp($(this).attr("edit_ID"));
+        //弹出模态框
+        $("#empUpdateModal").modal({
+            backdrop:"static"
+        });
+    });
+    //获取到员工信息
+    function getEmp(empId){
+        $.ajax({
+            url:"${APP_PATH}/getEmp/"+empId,
+            type:"GET",
+            success:function (result) {
+                //获取从Controller层返回来的员工
+                var employee = result.resultMap.employee;
+                $("#empName_update_static").text(employee.empName);
+                $("#email_update_input").val(employee.email);
+                $("#empUpdateModal select").val([employee.dId]);
+            }
+        });
+    };
 </script>
 </body>
 </html>
