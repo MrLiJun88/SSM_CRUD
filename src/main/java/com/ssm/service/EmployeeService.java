@@ -36,4 +36,22 @@ public class EmployeeService {
     public Employee getEmp(Integer empId){
         return employeeMapper.selectByPrimaryKey(empId);
     }
+
+    /**更新员工信息*/
+    public void updateEmp(Employee employee){
+        employeeMapper.updateByPrimaryKeySelective(employee);
+    }
+
+    /**删除员工信息*/
+    public void deleteEmp(Integer empId){
+        employeeMapper.deleteByPrimaryKey(empId);
+    }
+
+    /**批量删除呐信息*/
+    public void deleteBatch(List<Integer> list){
+        EmployeeExample employeeExample = new EmployeeExample();
+        EmployeeExample.Criteria criteria = employeeExample.createCriteria();
+        criteria.andEmpIdIn(list);
+        employeeMapper.deleteByExample(employeeExample);
+    }
 }

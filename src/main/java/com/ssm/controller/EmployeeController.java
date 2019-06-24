@@ -5,6 +5,7 @@ import com.github.pagehelper.PageInfo;
 import com.ssm.entity.Employee;
 import com.ssm.entity.Message;
 import com.ssm.service.EmployeeService;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,9 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 处理页面对员工的crud请求
@@ -100,7 +99,37 @@ public class EmployeeController {
         return Message.success().add("employee",employee);
     }
 
+    /**更新员工信息
+     * 传过来的 empId，springmvc会自动封装成 Employee对象，进行更新
+     * */
+    @RequestMapping(value = "/updateEmp/{empId}",method = RequestMethod.PUT)
+    @ResponseBody
+    public Message updateEmp(Employee employee){
+        employeeService.updateEmp(employee);
+        return Message.success();
+    }
 
+    /**删除员工信息*/
+    @RequestMapping(value = "/deleteEmp/{empId}",method = RequestMethod.DELETE)
+    @ResponseBody
+    public Message deleteEmp(@PathVariable("empId") Integer empId){
+        employeeService.deleteEmp(empId);
+        return Message.success();
+    }
+
+    /**批量删除员工信息*/
+    @RequestMapping(value = "/delAllEmp/{del_idstr}",method = RequestMethod.DELETE)
+    @ResponseBody
+    public Message deleteAllEmp(@PathVariable("del_idstr")String del_idstr){
+        String[] delId = del_idstr.split("-");
+        List<Integer> list = new ArrayList<>();
+        for(String id : delId){
+            list.add(Integer.parseInt(id));
+        }
+        /**批量删除*/
+        employeeService.deleteBatch(list);
+        return Message.success();
+    }
 
 
 
