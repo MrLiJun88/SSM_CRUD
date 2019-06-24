@@ -47,7 +47,7 @@ public class EmployeeService {
         employeeMapper.deleteByPrimaryKey(empId);
     }
 
-    /**批量删除呐信息*/
+    /**批量删除员工信息*/
     public void deleteBatch(List<Integer> list){
         EmployeeExample employeeExample = new EmployeeExample();
         EmployeeExample.Criteria criteria = employeeExample.createCriteria();
